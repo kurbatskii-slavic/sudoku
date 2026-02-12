@@ -4,6 +4,8 @@ using Random
 mutable struct Grid
     n::Int # block size (n^2 - rows/columns/blocks total number)
     table::Matrix{Int}
+
+    # Base concstructor
     function Grid(n::Int=3)
         N = n * n # blocks total number
         table = Matrix{Int}(undef, N, N)
@@ -14,6 +16,12 @@ mutable struct Grid
         end
         new(n, table)
     end
+
+    # constructor from Matrix
+    function Grid(n::Int, ref)
+        table = copy(ref)
+        new(n, table)
+    end
 end
 
 # print grid
@@ -21,8 +29,10 @@ function Base.show(io::IO, g::Grid)
     for i in 1:(g.n * g.n)
         println(io, g.table[i, :])
     end
+    println()
 end
 
+# mix operations
 function transpose(g::Grid)
     g.table = g.table' 
 end
@@ -65,6 +75,16 @@ function swap_columns_area(g::Grid)
     transpose(g)
 end
 
-show(Grid())
-
-
+# mix function
+function mix(g::Grid, amt=10)
+    mix_func = [transpose, 
+                swap_columns_area, 
+                swap_columns_small,
+                swap_rows_area,
+                swap_rows_small,
+                ]
+    for i in 1:amt
+        f = rand(mix_func)
+        f(g)
+    end
+end

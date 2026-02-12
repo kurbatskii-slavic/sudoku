@@ -25,26 +25,33 @@ function solve_sudoku(size, grid)
     
     for i in 1:N
         for j in 1:N
-            n = grid[i][j]
+            n = grid[i, j]
             if n ≠ 0
                 select(X_dict, Y, (i-1, j-1, n))
             end
         end
     end
     
+    # find all solutions
     solutions = []
     for solution in solve(X_dict, Y)
         push!(solutions, copy(solution))
     end
     
-    for solution in solutions
-        new_grid = deepcopy(grid)
-        for (r, c, n) in solution
-            new_grid[r + 1][c + 1] = n
+    # convert solutions to Grid class
+    result = Grid[]
+    for sol in solutions
+        new_grid = copy(grid)
+        for (r, c, n) in sol
+            new_grid[r+1, c+1] = n
         end
-        display(new_grid)
-        println()
+        push!(result, Grid(R, new_grid))
     end
+    return result
+end
+
+function solve_sudoku(g::Grid)
+    solve_sudoku((g.n, g.n), g.table)
 end
 
 function exact_cover(X, Y)
@@ -115,18 +122,3 @@ function solve(X, Y)
     solve!(X, Y, [], solutions)
     return solutions
 end
-
-# Тестовый пример
-grid = [
-    [5, 0, 9, 6, 7, 2, 0, 8, 0],
-    [8, 0, 3, 9, 0, 1, 2, 7, 0],
-    [2, 0, 7, 0, 0, 8, 0, 9, 0],
-    [3, 7, 8, 2, 1, 6, 5, 4, 9],
-    [6, 5, 4, 8, 9, 0, 0, 0, 2],
-    [1, 9, 2, 0, 0, 5, 8, 6, 0],
-    [7, 3, 1, 5, 6, 4, 9, 2, 8],
-    [9, 8, 5, 0, 2, 0, 6, 0, 4],
-    [4, 2, 6, 0, 8, 9, 0, 5, 0]
-]
-
-solve_sudoku((3, 3), grid)
