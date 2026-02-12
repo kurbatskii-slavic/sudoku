@@ -1,20 +1,23 @@
 using Base.Iterators
 
-function solve_sudoku(size, grid)
-    R, C = size
-    N = R * C
 
-    X = vcat(
-        [("rc", rc) for rc in product(0:N-1, 0:N-1)],
-        [("rn", rn) for rn in product(0:N-1, 1:N)],
-        [("cn", cn) for cn in product(0:N-1, 1:N)],
-        [("bn", bn) for bn in product(0:N-1, 1:N)]
+# main solver function
+function solve_sudoku(size, grid)
+    R, C = size # rows and columns number (R = C usually)
+    N = R * C # number of elements
+
+    X = vcat( # all possible restrictions
+        [("rc", rc) for rc in product(0:N-1, 0:N-1)], # each tile has only 1 number
+        [("rn", rn) for rn in product(0:N-1, 1:N)], # each row has only one number n
+        [("cn", cn) for cn in product(0:N-1, 1:N)], # each column has only one number n
+        [("bn", bn) for bn in product(0:N-1, 1:N)] # each block has only one number n
     )
     
+    # all candidates (coordinates and values)
     Y = Dict{Tuple{Int,Int,Int}, Vector{Tuple{String, Tuple{Int,Int}}}}()
-    for (r, c, n) in product(0:N-1, 0:N-1, 1:N)
+    for (r, c, n) in product(0:N-1, 0:N-1, 1:N) # r - row, c - column, n - number
         b = div(r, R) * R + div(c, C)  # Box number
-        Y[(r, c, n)] = [
+        Y[(r, c, n)] = [ # all restrictions that cover (r, c, n)
             ("rc", (r, c)),
             ("rn", (r, n)),
             ("cn", (c, n)),
@@ -27,7 +30,7 @@ function solve_sudoku(size, grid)
         for j in 1:N
             n = grid[i, j]
             if n ≠ 0
-                select(X_dict, Y, (i-1, j-1, n))
+                select(X_dict, Y, (i-1, j-1, n)) # 
             end
         end
     end
@@ -50,10 +53,12 @@ function solve_sudoku(size, grid)
     return result
 end
 
+# solve function overloading for Grid class
 function solve_sudoku(g::Grid)
     solve_sudoku((g.n, g.n), g.table)
 end
 
+# some helpful functions
 function exact_cover(X, Y)
     X_dict = Dict(j => Set() for j in X)
     for (i, row) in Y
@@ -64,6 +69,7 @@ function exact_cover(X, Y)
     return X_dict, Y
 end
 
+# put number on yhe tile and delete satisfied restrictions
 function select(X, Y, r)
     cols = []
     for j in Y[r]
@@ -81,6 +87,7 @@ function select(X, Y, r)
     return cols
 end
 
+# remove number and restore restrictions
 function deselect(X, Y, r, cols)
     for j in reverse(Y[r])
         X[j] = pop!(cols)
@@ -94,6 +101,7 @@ function deselect(X, Y, r, cols)
     end
 end
 
+# solving sudoku
 function solve!(X, Y, solution, solutions)
     if isempty(X)
         push!(solutions, copy(solution))
@@ -117,6 +125,7 @@ function solve!(X, Y, solution, solutions)
     end
 end
 
+# make an array of all possible solutions
 function solve(X, Y)
     solutions = []
     solve!(X, Y, [], solutions)

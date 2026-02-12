@@ -3,9 +3,9 @@ using Random
 # struct for sudoku grid
 mutable struct Grid
     n::Int # block size (n^2 - rows/columns/blocks total number)
-    table::Matrix{Int}
+    table::Matrix{Int} # Matrix with numbers
 
-    # Base concstructor
+    # base concstructor
     function Grid(n::Int=3)
         N = n * n # blocks total number
         table = Matrix{Int}(undef, N, N)
@@ -24,39 +24,59 @@ mutable struct Grid
     end
 end
 
-# print grid
+# print grid with block separators
 function Base.show(io::IO, g::Grid)
-    for i in 1:(g.n * g.n)
-        println(io, g.table[i, :])
+    N = g.n * g.n
+    for i in 1:N
+        # horizontal line
+        if i % g.n == 1 && i != 1
+            println(io, "-" ^ (2N + g.n - 1))
+        end
+        for j in 1:N
+            # vertical line
+            if j % g.n == 1 && j != 1
+                print(io, "| ")
+            end
+            val = g.table[i, j]
+            if val == 0
+                print(io, ". ")
+            else
+                print(io, val, " ")
+            end
+        end
+        println(io)
     end
     println()
 end
+
 
 # mix operations
 function transpose(g::Grid)
     g.table = g.table' 
 end
- 
-function swap_rows_small(g::Grid)
-    area = rand(1:g.n)
-    line1 = rand(1:g.n)
-    N₁ = (area - 1) * g.n + line1
-    line2 = rand(1:g.n)
-    while line1 == line2
-        line2 = rand(1:g.n)
-    end
-    N₂ = (area - 1) * g.n + line2
 
-    g.table[[N₁, N₂], :] = g.table[[N₂, N₁], :]
+# swap rows within area
+function swap_rows_small(g::Grid)
+    area = rand(1:g.n) # choose area
+    row1 = rand(1:g.n) # choose first row (local number)
+    N₁ = (area - 1) * g.n + row1 # row1 global number
+    row2 = rand(1:g.n) # choose second row (local number)
+    while row1 == row2 # check if they are equal
+        row2 = rand(1:g.n)
+    end
+    N₂ = (area - 1) * g.n + row2 # row2 global number
+
+    g.table[[N₁, N₂], :] = g.table[[N₂, N₁], :] # swap rows
 end
 
-
+# swap columns within area (equal to rows of gᵀ)
 function swap_columns_small(g::Grid)
     transpose(g)
     swap_rows_small(g)
     transpose(g)
 end
 
+# swap two rows areas
 function swap_rows_area(g::Grid)
     area1 = rand(1:g.n)
     area2 = rand(1:g.n)
@@ -64,18 +84,19 @@ function swap_rows_area(g::Grid)
         area2 = rand(1:g.n)
     end
     for i in 1:g.n
-        N₁, N₂ = (area1 - 1) * g.n + i, (area2 - 1) * g.n + i
-        g.table[[N₁, N₂], :] = g.table[[N₂, N₁], :]
+        N₁, N₂ = (area1 - 1) * g.n + i, (area2 - 1) * g.n + i # rows global numbers
+        g.table[[N₁, N₂], :] = g.table[[N₂, N₁], :] # swap
     end
 end
- 
+
+# swap two columns areas (equal to rows of gᵀ)
 function swap_columns_area(g::Grid)
     transpose(g)
     swap_rows_area(g)
     transpose(g)
 end
 
-# mix function
+# mix function (combine random transformations)
 function mix(g::Grid, amt=10)
     mix_func = [transpose, 
                 swap_columns_area, 

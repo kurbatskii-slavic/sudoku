@@ -1,7 +1,7 @@
 include("grid.jl")
 include("solver.jl")
 
-
+# generate sudoku from initial filled grid g
 function generate_sudoku(g::Grid)
     N = g.n^2 # row/column size
     table = copy(g.table)
@@ -19,20 +19,11 @@ function generate_sudoku(g::Grid)
 
             density -= 1 # remove 1 element
             solutions = solve_sudoku((g.n, g.n), table)
-            if length(solutions) ≠ 1
+            if length(solutions) ≠ 1 # check solution uniqueness
                 table[i, j] = element # restore changes
                 density += 1
             end
         end
     end
-    Grid(g.n, table)
+    Grid(g.n, table) # result as Grid class object
 end
-
-
-g = Grid()
-mix(g)
-show(g)
-s = generate_sudoku(g)
-show(s)
-show(g)
-show(solve_sudoku(s)[1])
